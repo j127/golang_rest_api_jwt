@@ -1,0 +1,29 @@
+version: "3"
+
+volumes:
+    postgres:
+
+services:
+    # go:
+    #     build:
+    #         dockerfile: Dockerfile.go
+    #         context: .
+    #     depends_on:
+    #         - postgres
+    #         - redis
+    #     env_file:
+    #         - ./.env
+
+    postgres:
+        build:
+            dockerfile: Dockerfile.postgres
+            context: .
+        env_file:
+            - ./.env
+        volumes:
+            - ./pg/db_data:/var/lib/postgresql/data
+
+    # redis:
+    #     image: "redis:latest"
+    #     volumes:
+    #         - redis:/data

@@ -18,13 +18,10 @@ $ go get -u github.com/dgrijalva/jwt-go
 $ go get -u github.com/lib/pq
 ```
 
-To start Postgres:
+To start Postgres, use the `docker-compose.yml` file.
 
-```
-$ docker run --rm \
-    -p 5432:5432 \
-    -v $HOME/docker/volumes/postgres:/var/run/postgresql \
-    -e POSTGRES_USER=pv \
-    -e POSTGRES_PASSWORD=docker \
-    --name postgres-go postgres
+Enter the container like this, if necessary:
+
+```text
+$ dc exec -it <container_id> psql -U postgres
 ```
