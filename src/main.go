@@ -8,7 +8,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/davecgh/go-spew/spew"
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/lib/pq"
@@ -39,10 +40,14 @@ func main() {
 		log.Fatal("error loading .env file")
 	}
 
+	// TODO: sslmode is disabled here just because this is a simple learning
+	// experiment, but be sure to read up about it for production projects.
+	// - https://errorsingo.com/github.com-lib-pq-err-ssl-not-supported/
+	// - https://jdbc.postgresql.org/documentation/head/connect.html
 	postgresUser := os.Getenv("POSTGRES_USER")
 	postgresPassword := os.Getenv("POSTGRES_PASSWORD")
 	postgresDatabase := os.Getenv("POSTGRES_DB")
-	postgresURL := "postgresql://" + postgresUser + ":" + postgresPassword + "@localhost:5432/" + postgresDatabase
+	postgresURL := "postgresql://" + postgresUser + ":" + postgresPassword + "@localhost:5432/" + postgresDatabase + "?sslmode=disable"
 
 	pgURL, err := pq.ParseURL(postgresURL)
 	if err != nil {
@@ -71,12 +76,17 @@ func respondWithError(w http.ResponseWriter, status int, error Error) {
 	json.NewEncoder(w).Encode(error)
 }
 
+func responseJSON(w http.ResponseWriter, data interface{}) {
+	json.NewEncoder(w).Encode(data)
+}
+
 func signup(w http.ResponseWriter, r *http.Request) {
 	var user User
 	var error Error
 
 	json.NewDecoder(r.Body).Decode(&user)
 
+	// seems like validation could be combined
 	if user.Email == "" {
 		error.Message = "Email is missing."
 		respondWithError(w, http.StatusBadRequest, error)
@@ -89,9 +99,27 @@ func signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(user)
-	fmt.Println("-------")
-	spew.Dump(user)
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	user.Password = string(hash)
+
+	stmt := "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id;"
+	err = db.QueryRow(stmt, user.Email, user.Password).Scan(&user.ID)
+	if err != nil {
+		fmt.Println("err", err)
+		error.Message = "server error"
+		respondWithError(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	user.Password = ""
+	w.Header().Set("Content-Type", "application/json")
+
+	// spew.Dump(user)
+	responseJSON(w, user)
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
