@@ -47,14 +47,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(pgURL)
-
 	db, err = sql.Open("postgres", pgURL)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(db)
+	err = db.Ping()
 
 	router := mux.NewRouter()
 
