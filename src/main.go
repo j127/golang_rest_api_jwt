@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/lib/pq"
@@ -122,7 +123,36 @@ func signup(w http.ResponseWriter, r *http.Request) {
 	responseJSON(w, user)
 }
 
+// GenerateToken generates a token
+func GenerateToken(user User) (string, error) {
+	var err error
+	secret := "secret"
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email": user.Email,
+		"iss":   "course",
+	})
+
+	// spew.Dump(token)
+	// return "", nil
+
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		log.Fatal()
+	}
+
+	return tokenString, nil
+}
+
 func login(w http.ResponseWriter, r *http.Request) {
+	var user User
+	json.NewDecoder(r.Body).Decode(&user)
+	token, err := GenerateToken(user)
+	if err != nil {
+		log.Fatal()
+	}
+	fmt.Println("token", token)
+
 	w.Write([]byte("login"))
 }
 
