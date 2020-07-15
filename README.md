@@ -1,6 +1,6 @@
-# Golang: Intro to REST API JWT auth with Go
+# Go JWT
 
-From a [Udemy course](https://www.udemy.com/course/build-jwt-authenticated-restful-apis-with-golang/).
+A quick intro to JWT with Go, based on [this](https://www.udemy.com/course/build-jwt-authenticated-restful-apis-with-golang/).
 
 ## The Application
 
@@ -18,7 +18,7 @@ $ go get -u github.com/dgrijalva/jwt-go
 $ go get -u github.com/lib/pq
 ```
 
-To start Postgres, use the `docker-compose.yml` file.
+To start Postgres, use the `docker-compose.yml` file. The Go app isn't running in Docker, but Postgres is because I don't have it installed on my computer.
 
 Enter the container like this, if necessary:
 
