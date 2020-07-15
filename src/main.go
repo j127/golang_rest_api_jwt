@@ -2,11 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/lib/pq"
@@ -64,8 +66,32 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
 
+func respondWithError(w http.ResponseWriter, status int, error Error) {
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(error)
+}
+
 func signup(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("signup"))
+	var user User
+	var error Error
+
+	json.NewDecoder(r.Body).Decode(&user)
+
+	if user.Email == "" {
+		error.Message = "Email is missing."
+		respondWithError(w, http.StatusBadRequest, error)
+		return
+	}
+
+	if user.Password == "" {
+		error.Message = "Password is missing."
+		respondWithError(w, http.StatusBadRequest, error)
+		return
+	}
+
+	fmt.Println(user)
+	fmt.Println("-------")
+	spew.Dump(user)
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
