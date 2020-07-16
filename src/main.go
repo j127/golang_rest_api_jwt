@@ -9,12 +9,11 @@ import (
 	"os"
 	"strings"
 
-	"golang.org/x/crypto/bcrypt"
-
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // User represents a user
@@ -215,7 +214,7 @@ func TokenVerifyMiddleWare(next http.HandlerFunc) http.HandlerFunc {
 					return nil, fmt.Errorf("There was an error")
 				}
 
-				return []byte("secret"), nil
+				return []byte(os.Getenv("JWT_SECRET")), nil
 			})
 
 			if error != nil {
