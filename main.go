@@ -9,29 +9,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/j127/golang_rest_api_jwt/driver"
+	"github.com/j127/golang_rest_api_jwt/models"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
-
-// User represents a user
-type User struct {
-	ID       int    `json:"id"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-// JWT represents a JWT
-type JWT struct {
-	Token string `json:"token"`
-}
-
-// Error represents an error
-type Error struct {
-	Message string `json:"message"`
-}
 
 var db *sql.DB
 
@@ -41,24 +26,7 @@ func main() {
 		log.Fatal("error loading .env file")
 	}
 
-	// TODO: sslmode is disabled here just because this is a simple learning
-	// experiment, but be sure to read up about it for production projects.
-	// - https://errorsingo.com/github.com-lib-pq-err-ssl-not-supported/
-	// - https://jdbc.postgresql.org/documentation/head/connect.html
-	postgresUser := os.Getenv("POSTGRES_USER")
-	postgresPassword := os.Getenv("POSTGRES_PASSWORD")
-	postgresDatabase := os.Getenv("POSTGRES_DB")
-	postgresURL := "postgresql://" + postgresUser + ":" + postgresPassword + "@localhost:5432/" + postgresDatabase + "?sslmode=disable"
-
-	pgURL, err := pq.ParseURL(postgresURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	db, err = sql.Open("postgres", pgURL)
-	if err != nil {
-		log.Fatal(err)
-	}
+	db = driver.ConnectDB()
 
 	err = db.Ping()
 
@@ -72,7 +40,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
 
-func respondWithError(w http.ResponseWriter, status int, error Error) {
+func respondWithError(w http.ResponseWriter, status int, error models.Error) {
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(error)
 }
@@ -82,8 +50,8 @@ func responseJSON(w http.ResponseWriter, data interface{}) {
 }
 
 func signup(w http.ResponseWriter, r *http.Request) {
-	var user User
-	var error Error
+	var user models.User
+	var error models.Error
 
 	json.NewDecoder(r.Body).Decode(&user)
 
@@ -124,7 +92,7 @@ func signup(w http.ResponseWriter, r *http.Request) {
 }
 
 // GenerateToken generates a token
-func GenerateToken(user User) (string, error) {
+func GenerateToken(user models.User) (string, error) {
 	var err error
 	secret := os.Getenv("JWT_SECRET")
 
@@ -145,9 +113,9 @@ func GenerateToken(user User) (string, error) {
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
-	var user User
-	var jwt JWT
-	var error Error
+	var user models.User
+	var jwt models.JWT
+	var error models.Error
 
 	json.NewDecoder(r.Body).Decode(&user)
 	if user.Email == "" {
@@ -202,7 +170,7 @@ func protectedEndpoint(w http.ResponseWriter, r *http.Request) {
 // TokenVerifyMiddleWare function
 func TokenVerifyMiddleWare(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var errorObject Error
+		var errorObject models.Error
 		authHeader := r.Header.Get("Authorization")
 		bearerToken := strings.Split(authHeader, " ")
 
