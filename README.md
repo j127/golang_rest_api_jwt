@@ -53,3 +53,5 @@ Take the token that is returned and use it to access the protected route in the 
 ```text
 $ curl -H 'Authorization: bearer <some_token>' http://localhost:8000/protected
 ```
+
+The code from the videos is [here](https://github.com/codixir/jwt-course-refactored).
