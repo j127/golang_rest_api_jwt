@@ -20,6 +20,8 @@ $ go get -u github.com/davecgh/go-spew/spew
 $ go get golang.org/x/crypto/bcrypt
 ```
 
+During the refactoring section he added a package named `github.com/subosito/gotenv`, but I had already added [github.com/joho/godotenv](https://github.com/joho/godotenv) in an earlier stage, because I didn't want to put secrets directly in the code.
+
 To start Postgres, use the `docker-compose.yml` file. The Go app isn't running in Docker, but Postgres is because I don't have it installed on my computer.
 
 Enter the container like this, if necessary:

@@ -127,7 +127,7 @@ func signup(w http.ResponseWriter, r *http.Request) {
 // GenerateToken generates a token
 func GenerateToken(user User) (string, error) {
 	var err error
-	secret := "secret"
+	secret := os.Getenv("JWT_SECRET")
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email": user.Email,
