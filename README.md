@@ -27,3 +27,25 @@ Enter the container like this, if necessary:
 ```text
 $ dc exec -it <container_id> psql -U postgres
 ```
+
+## Usage
+
+Sign up for an account:
+
+```text
+$ curl -XPOST http://localhost:8000/signup -d '{"Email":"alice@example.com","Password":"1234"}'
+```
+
+Log in:
+
+```text
+$ curl -XPOST http://localhost:8000/login -d '{"Email":"alice@example.com","Password":"1234"}'
+```
+
+Take the token that is returned and use it to access the protected route in the next step.
+
+`GET` a protected route:
+
+```text
+$ curl -H 'Authorization: bearer <some_token>' http://localhost:8000/protected
+```
