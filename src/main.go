@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -162,6 +163,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	password := user.Password
+
 	row := db.QueryRow("SELECT * FROM users WHERE email = $1", user.Email)
 	err := row.Scan(&user.ID, &user.Email, &user.Password)
 
@@ -174,8 +176,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 	}
-	// spew.Dump(user)
-	// responseJSON(w, user.ID)
+
 	hashedPassword := user.Password
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 
@@ -201,5 +202,38 @@ func protectedEndpoint(w http.ResponseWriter, r *http.Request) {
 
 // TokenVerifyMiddleWare function
 func TokenVerifyMiddleWare(next http.HandlerFunc) http.HandlerFunc {
-	return nil
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var errorObject Error
+		authHeader := r.Header.Get("Authorization")
+		bearerToken := strings.Split(authHeader, " ")
+
+		if len(bearerToken) == 2 {
+			authToken := bearerToken[1]
+
+			token, error := jwt.Parse(authToken, func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("There was an error")
+				}
+
+				return []byte("secret"), nil
+			})
+
+			if error != nil {
+				errorObject.Message = error.Error()
+				respondWithError(w, http.StatusUnauthorized, errorObject)
+			}
+
+			if token.Valid {
+				next.ServeHTTP(w, r)
+			} else {
+				errorObject.Message = error.Error()
+				respondWithError(w, http.StatusUnauthorized, errorObject)
+				return
+			}
+
+		} else {
+			errorObject.Message = "Invalid token."
+			respondWithError(w, http.StatusUnauthorized, errorObject)
+		}
+	})
 }
