@@ -11,6 +11,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/j127/golang_rest_api_jwt/models"
+	userRepository "github.com/j127/golang_rest_api_jwt/repository/user"
 	"github.com/j127/golang_rest_api_jwt/utils"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -43,10 +44,10 @@ func (c Controller) Signup(db *sql.DB) http.HandlerFunc {
 
 		user.Password = string(hash)
 
-		stmt := "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id;"
-		err = db.QueryRow(stmt, user.Email, user.Password).Scan(&user.ID)
+		userRepo := userRepository.UserRepository{}
+		user = userRepo.Signup(db, user)
+
 		if err != nil {
-			fmt.Println("err", err)
 			error.Message = "server error"
 			utils.RespondWithError(w, http.StatusInternalServerError, error)
 			return
@@ -81,8 +82,8 @@ func (c Controller) Login(db *sql.DB) http.HandlerFunc {
 
 		password := user.Password
 
-		row := db.QueryRow("SELECT * FROM users WHERE email = $1", user.Email)
-		err := row.Scan(&user.ID, &user.Email, &user.Password)
+		userRepo := userRepository.UserRepository{}
+		user, err := userRepo.Login(db, user)
 
 		if err != nil {
 			if err == sql.ErrNoRows {

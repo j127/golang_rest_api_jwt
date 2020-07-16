@@ -23,6 +23,7 @@ func main() {
 	db = driver.ConnectDB()
 	controller := controllers.Controller{}
 
+	// TODO: look up what this does
 	err = db.Ping()
 
 	router := mux.NewRouter()
